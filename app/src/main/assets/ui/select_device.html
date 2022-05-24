@@ -1,0 +1,274 @@
+<!doctype html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <title>LanBridge</title>
+    <link href="./materialdesignicons.min.css" rel="stylesheet">
+    <link href="./vuetify.min.css" rel="stylesheet">
+    <script src="./vue.js"></script>
+    <script src="./vuetify.js"></script>
+</head>
+<style>
+    * {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        -webkit-user-select: none;
+        user-select: none;
+        outline: none;
+    }
+
+    [v-cloak] {
+        display: none;
+    }
+
+    html,
+    body {
+        width: 100vw;
+        height: 100vh;
+        margin: 0 auto;
+    }
+    .v-dialog{
+        overflow-x: hidden;
+    }
+    ::-webkit-scrollbar {
+        display: none
+    }
+
+    canvas {
+        display: block;
+        height: 100vh;
+        width: 100vw;
+        filter: blur(60px);
+        -webkit-filter: blur(60px);
+        z-index: -1;
+        position: fixed;
+        overflow: hidden;
+    }
+
+    #app {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100vw;
+        background: transparent;
+    }
+
+    .myGroup-enter,
+    .myGroup-leave-to {
+        opacity: 0;
+        transform: translateY(80px);
+    }
+
+    .myGroup-enter-active,
+    .myGroup-leave-active {
+        transition: all 0.5s;
+    }
+
+    .myGroup-move {
+        transition: all 0.5s;
+    }
+
+    .myGroup-leave-active {
+        position: absolute;
+    }
+
+    @keyframes flicker {
+        from {
+            opacity: 1.0;
+        }
+
+        50% {
+            opacity: 0.4;
+        }
+
+        to {
+            opacity: 1.0;
+        }
+    }
+
+    @-webkit-keyframes flicker {
+        from {
+            opacity: 1.0;
+        }
+
+        50% {
+            opacity: 0.4;
+        }
+
+        to {
+            opacity: 1.0;
+        }
+    }
+
+    .flicker {
+        animation: flicker 800ms infinite;
+        -webkit-animation: flicker 800ms infinite;
+    }
+</style>
+
+<body>
+
+
+    <div v-cloak id="app">
+        <v-app>
+            <v-main>
+
+<br>
+                <v-card class="mx-auto" max-width="80%" v-if="Object.keys(clients_lan).length==0">
+
+                    <v-carousel :continuous="true" :cycle="true" :show-arrows="true" hide-delimiter-background
+                        show-arrows-on-hover delimiter-icon="mdi-minus" height="300">
+                        <v-carousel-item>
+                            <v-sheet color="green" height="100%" tile>
+                                <v-row class="fill-height" align="center" justify="center">
+                                    <div class="text-h2">
+                                        Slide1
+                                    </div>
+                                </v-row>
+                            </v-sheet>
+                        </v-carousel-item>
+                        <v-carousel-item>
+                            <v-sheet color="blue" height="100%" tile>
+                                <v-row class="fill-height" align="center" justify="center">
+                                    <div class="text-h2">
+                                        Slide2
+                                    </div>
+                                </v-row>
+                            </v-sheet>
+                        </v-carousel-item>
+                        <v-carousel-item>
+                            <v-sheet color="primary" height="100%" tile>
+                                <v-row class="fill-height" align="center" justify="center">
+                                    <div class="text-h2">
+                                        Slide3
+                                    </div>
+                                </v-row>
+                            </v-sheet>
+                        </v-carousel-item>
+                    </v-carousel>
+
+                    <v-list-item three-line>
+                        <v-list-item-avatar>
+                            <v-icon large color="primary">mdi-access-point-network</v-icon>
+                        </v-list-item-avatar>
+                        <v-list-item-content>
+                            <span class="text-h5 mb-1">
+                                当前暂无设备连接...
+                            </span>
+                            <br>
+                            <span>
+                                网络发现进行中，请打开其他设备上的LanBridge应用，并保证设备处于同一网络下。
+                            </span>
+                        </v-list-item-content>
+                    </v-list-item>
+
+                </v-card>
+
+
+
+
+
+
+
+
+
+                <v-container fluid>
+                    <v-row>
+                        <v-col v-for="(value, name) in clients_lan" :key="name">
+                            <transition-group appear name="myGroup">
+                                <v-card class="mx-auto" max-width="344" elevation="3" outlined
+                                    :loading="!value.ws_connected" :key="name">
+
+                                    <v-overlay :absolute=true :value="!value.ws_connected">
+                                        <v-alert type="error">
+                                            连接断开，正在重连。。。
+                                        </v-alert>
+                                    </v-overlay>
+
+                                    <v-list-item three-line>
+                                        <v-list-item-content>
+                                            <div class="text-overline mb-4">
+                                                {{name}}
+                                            </div>
+                                            <v-list-item-title class="text-h5 mb-1">
+                                                {{value.sys_info.hostname}}
+                                            </v-list-item-title>
+                                            <v-card-text>
+                                                {{value.sys_info.platform}}<br>
+                                                {{value.sys_info.mac}}<br>
+                                            </v-card-text>
+                                        </v-list-item-content>
+
+                                        <v-list-item-avatar tile size="80">
+                                            <img v-bind:src="'./img/os_logo/' +value.sys_info.system+ '.svg'">
+                                        </v-list-item-avatar>
+                                    </v-list-item>
+
+                                    <v-card-actions>
+                                        <v-btn v-on:click="send_file(name)"
+                                            color="primary" elevation="2" large block>
+                                            开始发送 <v-icon right> mdi-send</v-icon>
+                                        </v-btn>
+                                    </v-card-actions>
+                                </v-card>
+                            </transition-group>
+
+                        </v-col>
+                    </v-row>
+                </v-container>
+
+
+
+
+            </v-main>
+        </v-app>
+    </div>
+
+
+    <script>
+       
+        function jsonParser(blob) {
+            let parsed = JSON.parse(blob);
+            if (typeof parsed === 'string') parsed = jsonParser(parsed);
+            return parsed;
+        }
+
+        //eel.expose(update_all_lan_clients);
+        function update_all_lan_clients() {
+            app.update_all_lan_clients();  
+        }
+   
+        setInterval("update_all_lan_clients()",5000);
+        
+        var app = new Vue({
+            el: '#app',
+            vuetify: new Vuetify(),
+            data: {
+                clients_lan: {},
+            },
+            watch: {
+            },
+            methods: {
+                send_file: function (ip) {
+                    eel.send_file(ip);
+                },
+                update_all_lan_clients:function(){
+                    var t = eel.get_all_lan_clients();
+                    temp = jsonParser(t);
+                    this.clients_lan = temp;
+                },
+            },
+            mounted() {
+                this.update_all_lan_clients();
+            }
+        });
+
+
+
+    </script>
+
+ 
+</body>
+
+</html>
