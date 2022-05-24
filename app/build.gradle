@@ -6,9 +6,9 @@ android {
     signingConfigs {
         release {
             storeFile file('C:\\Users\\z\\AndroidStudioProjects\\LanBridge\\idealbroker.keystore')
-            storePassword 'wfkycEzzxjl1'
+            storePassword '******'
             keyAlias 'android.keystore'
-            keyPassword 'wfkycEzzxjl1'
+            keyPassword '******'
             v2SigningEnabled true
         }
     }
